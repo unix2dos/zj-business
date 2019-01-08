@@ -1,7 +1,6 @@
-package http
+package util
 
 import (
-	"net/url"
 	"sync"
 	"time"
 
@@ -34,13 +33,10 @@ func Get(url string) (body []byte, err error) {
 	return
 }
 
-func Post(url string, values url.Values) (body []byte, err error) {
+func Post(url string, str string) (body []byte, err error) {
 	req, res := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
-	args := req.PostArgs()
-	for k := range values {
-		args.Add(k, values.Get(k))
-	}
 	req.Header.SetMethod("POST")
+	req.SetBodyString(str)
 	req.SetRequestURI(url)
 	err = client().Do(req, res)
 	if err != nil {

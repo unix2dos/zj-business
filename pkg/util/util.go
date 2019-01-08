@@ -18,6 +18,11 @@ func GBK2UTF8(s string) string {
 	return string(d)
 }
 
+func UTF82GBK(s string) string {
+	result, _, _ := transform.String(simplifiedchinese.GBK.NewEncoder(), s)
+	return result
+}
+
 func Unicode2UTF8(source string) string {
 	var res = []string{""}
 	sUnicode := strings.Split(source, "\\u")
