@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/unix2dos/zj-business/pkg/log"
 	"github.com/unix2dos/zj-business/pkg/util"
@@ -35,42 +34,50 @@ func (b *Business) spider() {
 	_url := "http://wsdj.zjaic.gov.cn/pda.do"
 	values := url.Values{}
 	values.Set("method", "mccxList")
+	values.Set("type", "0")
+	values.Set("zwzh", util.UTF82GBK("食用菌"))
 
 	var data []Context
 	var word KeyWord
-	var maxPage = 1
+	var page = 1
+	var sum = 0
+	var first = true
 
 	for {
-		values.Set("currentPage", strconv.Itoa(maxPage))
+		values.Set("currentPage", strconv.Itoa(page))
 		str := values.Encode()
-		fmt.Println("post :", str)
 
 		body, err := util.Post(_url, str)
 		if err != nil {
-			log.Errorf("[Spider] get url err:%v", err)
+			log.Errorf("[spiderType] get url err:%v", err)
 			goto Sleep
 		}
 
 		data, word, err = GetNewContent(body)
 		if err != nil {
-			log.Errorf("[Spider] parse content err:%v", err)
+			log.Errorf("[spiderType] parse content err:%v", err)
 			goto Sleep
 		}
 
-		maxPage = word.MaxPage
-		fmt.Println("word: ", word)
-		for _, v := range data {
-			fmt.Println(v)
+		if !first {
+			for _, v := range data {
+				fmt.Println("-------------------new", v)
+			}
+		}
+
+		page++
+		sum += len(data)
+		fmt.Printf("spiderType post: %s, total: %d,  sum: %d\n", str, word.Total, sum)
+
+		if page > word.MaxPage {
+			first = false
+			page = 1
 		}
 
 	Sleep:
-		time.Sleep(time.Minute * 10)
+		// time.Sleep(time.Second)
 	}
-
 }
-
-// method=mccxList
-// method=mccxList&currentPage=2712
 
 // method=mccxList&type=0&zwzh=%B9%AB%CB%BE
 // method=mccxList&type=0&zwzh=%B9%AB%CB%BE&currentPage=53234

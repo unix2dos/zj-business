@@ -12,10 +12,11 @@ import (
 )
 
 type Context struct {
-	Index int
-	ID    string
-	Type  string
-	State string
+	Index   int
+	ID      string
+	Company string //名字
+	Type    string //企业
+	State   string //状态
 }
 
 type KeyWord struct {
@@ -54,9 +55,10 @@ func ParseContent(data []byte) (res []Context, word KeyWord, err error) {
 
 		context := Context{}
 		context.Index, _ = strconv.Atoi(strings.TrimSpace(util.GBK2UTF8(_index)))
-		context.ID = strings.TrimSpace(util.GBK2UTF8(_company))
+		context.Company = strings.TrimSpace(util.GBK2UTF8(_company))
 		context.Type = strings.TrimSpace(util.GBK2UTF8(_type))
 		context.State = strings.TrimSpace(util.GBK2UTF8(_state))
+		context.ID = context.Company + "_" + context.State
 
 		if context.State == "选择" {
 			str, ok := s.Find(".state a").Attr("onclick")
@@ -88,10 +90,5 @@ func GetNewContent(data []byte) (newS []Context, word KeyWord, err error) {
 			newS = append(newS, v)
 		}
 	}
-
-	if len(newS) >= 20 {
-		// newS = []Context{}
-	}
-
 	return
 }
