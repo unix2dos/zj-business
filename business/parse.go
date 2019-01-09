@@ -12,9 +12,16 @@ import (
 )
 
 type Context struct {
+	Index int
 	ID    string
 	Type  string
 	State string
+}
+
+type KeyWord struct {
+	Word    string
+	Total   int
+	MaxPage int
 }
 
 var (
@@ -22,17 +29,22 @@ var (
 	Mux        sync.Mutex
 )
 
-func ParseContent(data []byte) (res []Context, total int, err error) {
+func ParseContent(data []byte) (res []Context, word KeyWord, err error) {
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	total, _ = strconv.Atoi(doc.Find(".wrap .cxjg span").Text())
+	maxPage := strings.TrimSpace(util.GBK2UTF8(doc.Find(".maxPage").Text()))
+	maxPage = strings.TrimPrefix(maxPage, "共")
+	maxPage = strings.TrimSuffix(maxPage, "页")
+	word.Total, _ = strconv.Atoi(strings.TrimSpace(doc.Find(".wrap .cxjg span").Text()))
+	word.MaxPage, _ = strconv.Atoi(maxPage)
 
 	doc.Find(".search_result tr").Each(func(i int, s *goquery.Selection) {
 
+		_index := s.Children().First().Text()
 		_company := s.Find(".company").Text()
 		_type := s.Find(".search_txt").Text()
 		_state := s.Find(".state").Text()
@@ -41,6 +53,7 @@ func ParseContent(data []byte) (res []Context, total int, err error) {
 		}
 
 		context := Context{}
+		context.Index, _ = strconv.Atoi(strings.TrimSpace(util.GBK2UTF8(_index)))
 		context.ID = strings.TrimSpace(util.GBK2UTF8(_company))
 		context.Type = strings.TrimSpace(util.GBK2UTF8(_type))
 		context.State = strings.TrimSpace(util.GBK2UTF8(_state))
@@ -59,11 +72,11 @@ func ParseContent(data []byte) (res []Context, total int, err error) {
 	return
 }
 
-func GetNewContent(data []byte) (newS []Context, err error) {
+func GetNewContent(data []byte) (newS []Context, word KeyWord, err error) {
 	Mux.Lock()
 	defer func() { Mux.Unlock() }()
 
-	res, _, err := ParseContent(data)
+	res, word, err := ParseContent(data)
 	if err != nil {
 		return
 	}
